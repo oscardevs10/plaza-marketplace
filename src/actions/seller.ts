@@ -1,5 +1,6 @@
 'use server';
 
+import { invalidateCatalog } from '@/lib/cache';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { and, eq, sql } from 'drizzle-orm';
@@ -14,6 +15,7 @@ import { needsEmailCheck } from '@/lib/config';
 import { createStore } from '@/lib/services/community';
 import { markDelivered, markProcessing, markShipped } from '@/lib/services/orders';
 import { respondToReview } from '@/lib/services/reviews';
+import { answerQuestion, setQuestionVisibility } from '@/lib/services/questions';
 import { saveProduct, setProductStatus, setVariantStock } from '@/lib/services/seller/products';
 import type { ProductStatus } from '@/lib/services/seller/queries';
 import { CARRIERS } from '@/components/seller/constants';
@@ -50,7 +52,9 @@ export async function saveProductAction(productId: string | null, _: ActionState
     const { s } = await seller();
     if (!(await rateLimit('product-save', 60, 600, s.userId))) throw new AppError('Vas muy rápido. Espera un momento.');
     const r = await saveProduct(s, productId ? id(productId) : null, fd);
+    invalidateCatalog();
     revalidatePath('/vendedor', 'layout');
+    invalidateCatalog();
     revalidatePath(`/producto/${r.slug}`);
     to = `/vendedor/productos/${r.id}?guardado=${r.status}`;
   });
@@ -63,7 +67,9 @@ export async function setProductStatusAction(productId: string, to: ProductStatu
   return runAction(async () => {
     const { s } = await seller();
     const slug = await setProductStatus(s, id(productId), to);
+    invalidateCatalog();
     revalidatePath('/vendedor', 'layout');
+    invalidateCatalog();
     revalidatePath(`/producto/${slug}`);
     return { active: 'Producto publicado', paused: 'Producto pausado', archived: 'Producto archivado', draft: 'Producto movido a borradores' }[to as string] ?? 'Listo';
   });
@@ -74,6 +80,7 @@ export async function updateStockAction(variantId: string, _: ActionState, fd: F
     const { s } = await seller();
     const raw = str(fd, 'stock', 10);
     const delta = await setVariantStock(s, id(variantId), raw === '' ? NaN : Number(raw));
+    invalidateCatalog();
     revalidatePath('/vendedor', 'layout');
     return delta ? 'Existencias actualizadas' : 'Sin cambios';
   });
@@ -84,6 +91,7 @@ export async function markProcessingAction(sellerOrderId: string, _: ActionState
   return runAction(async () => {
     const { user, store } = await seller();
     await markProcessing(id(sellerOrderId), store.id, user.id);
+    invalidateCatalog();
     revalidatePath('/vendedor', 'layout');
     return 'Pedido marcado en preparación';
   });
@@ -99,6 +107,7 @@ export async function markShippedAction(sellerOrderId: string, _: ActionState, f
     const trackingNumber = str(fd, 'trackingNumber', 80);
     if (!/^[A-Za-z0-9-]{4,80}$/.test(trackingNumber)) throw new AppError('Escribe un número de guía válido (letras, números o guiones)');
     await markShipped(id(sellerOrderId), store.id, user.id, { carrier, trackingNumber });
+    invalidateCatalog();
     revalidatePath('/vendedor', 'layout');
     return 'Pedido marcado como enviado. Avisamos al comprador.';
   });
@@ -108,6 +117,7 @@ export async function markDeliveredAction(sellerOrderId: string, _: ActionState)
   return runAction(async () => {
     const { user, store } = await seller();
     await markDelivered(id(sellerOrderId), { id: user.id, storeId: store.id });
+    invalidateCatalog();
     revalidatePath('/vendedor', 'layout');
     return 'Entrega confirmada';
   });
@@ -119,6 +129,7 @@ export async function respondReviewAction(reviewId: string, _: ActionState, fd: 
     const { user, store } = await seller();
     if (!(await rateLimit('review-response', 60, 3600, user.id))) throw new AppError('Demasiadas respuestas seguidas. Intenta más tarde.');
     await respondToReview(store, user.id, id(reviewId), str(fd, 'body', 2000));
+    invalidateCatalog();
     revalidatePath('/vendedor/resenas');
     return 'Respuesta publicada';
   });
@@ -157,6 +168,7 @@ export async function createCouponAction(_: ActionState, fd: FormData): Promise<
     }).onConflictDoNothing().returning({ id: schema.coupons.id });
     if (!c) throw new AppError(`Ya tienes un cupón con el código ${code}`);
     await audit(user.id, 'coupon.created', 'coupon', c.id, { code, type, value });
+    invalidateCatalog();
     revalidatePath('/vendedor/cupones');
     return `Cupón ${code} creado`;
   });
@@ -169,6 +181,7 @@ export async function toggleCouponAction(couponId: string, _: ActionState): Prom
       .where(and(eq(schema.coupons.id, id(couponId)), eq(schema.coupons.storeId, store.id))).returning({ active: schema.coupons.active });
     if (!c) throw new AppError('Cupón no encontrado');
     await audit(user.id, c.active ? 'coupon.activated' : 'coupon.deactivated', 'coupon', couponId);
+    invalidateCatalog();
     revalidatePath('/vendedor/cupones');
     return c.active ? 'Cupón activado' : 'Cupón desactivado';
   });
@@ -182,6 +195,7 @@ export async function deleteCouponAction(couponId: string, _: ActionState): Prom
       .returning({ code: schema.coupons.code });
     if (!c) throw new AppError('Cupón no encontrado');
     await audit(user.id, 'coupon.deleted', 'coupon', couponId, { code: c.code });
+    invalidateCatalog();
     revalidatePath('/vendedor/cupones');
     return 'Cupón eliminado';
   });
@@ -203,7 +217,9 @@ export async function updateStoreAction(_: ActionState, fd: FormData): Promise<A
       ...(logoUrl && { logoUrl }), ...(bannerUrl && { bannerUrl }),
     }).where(eq(schema.stores.id, store.id)).returning({ slug: schema.stores.slug });
     await audit(user.id, 'store.updated', 'store', store.id, { logo: !!logoUrl, banner: !!bannerUrl });
+    invalidateCatalog();
     revalidatePath('/vendedor', 'layout');
+    invalidateCatalog();
     revalidatePath(`/tienda/${s.slug}`);
     return 'Tienda actualizada';
   });
@@ -221,6 +237,7 @@ export async function updateShippingAction(_: ActionState, fd: FormData): Promis
     if (!Number.isInteger(days) || days < 1 || days > 15) throw new AppError('Los días de preparación deben ser de 1 a 15');
     await db.update(schema.stores).set({ shippingFlat: flat, freeShippingOver: free, processingDays: days }).where(eq(schema.stores.id, store.id));
     await audit(user.id, 'store.shipping_updated', 'store', store.id, { flat, free, days });
+    invalidateCatalog();
     revalidatePath('/vendedor/configuracion');
     return 'Configuración de envíos guardada';
   });
@@ -239,7 +256,30 @@ export async function updateSellerProfileAction(_: ActionState, fd: FormData): P
     await db.insert(schema.sellerProfiles).values({ userId: user.id, legalName, phone, taxId, acceptedTermsAt: new Date() })
       .onConflictDoUpdate({ target: schema.sellerProfiles.userId, set: { legalName, phone, taxId } });
     await audit(user.id, 'seller_profile.updated', 'seller_profile', user.id, { taxId: !!taxId });
+    invalidateCatalog();
     revalidatePath('/vendedor/configuracion');
     return 'Datos fiscales y de contacto guardados';
+  });
+}
+
+// ---------- Preguntas ----------
+export async function answerQuestionAction(questionId: string, _: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const { user, store } = await seller();
+    if (!(await rateLimit('question-answer', 120, 3600, user.id))) throw new AppError('Demasiadas respuestas seguidas. Intenta más tarde.');
+    await answerQuestion(store, user.id, id(questionId), str(fd, 'answer', 1100));
+    invalidateCatalog();
+    revalidatePath('/vendedor/preguntas');
+    return 'Respuesta publicada';
+  });
+}
+
+export async function questionVisibilityAction(questionId: string, status: 'published' | 'hidden', _: ActionState): Promise<ActionState> {
+  return runAction(async () => {
+    const { user, store } = await seller();
+    await setQuestionVisibility(store, user.id, id(questionId), status);
+    invalidateCatalog();
+    revalidatePath('/vendedor/preguntas');
+    return status === 'hidden' ? 'Pregunta ocultada' : 'Pregunta visible de nuevo';
   });
 }

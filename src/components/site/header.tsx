@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { connection } from 'next/server';
 import { Heart, ShoppingBag, Bell, User, Store, Shield, Package, LogOut, ChevronDown } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth/session';
 import { hasRole } from '@/lib/auth/guards';
@@ -12,6 +11,7 @@ import { buttonClass } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/misc';
 import { SearchBox } from './search-box';
 import { Logo } from './logo';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export function Header() {
   return (
@@ -20,6 +20,7 @@ export function Header() {
         <Logo />
         <SearchBox className="hidden flex-1 md:block md:max-w-xl lg:max-w-2xl" />
         <div className="ml-auto flex items-center gap-1">
+          <div className="hidden md:block"><ThemeToggle /></div>
           <Suspense fallback={<Skeleton className="h-9 w-40" />}>
             <HeaderActions />
           </Suspense>
@@ -67,7 +68,7 @@ async function HeaderActions() {
       {cartLink}
       <details className="group relative ml-1">
         <summary className="flex items-center gap-2 rounded-full py-1 pr-2 pl-1 transition-colors hover:bg-subtle" aria-label="Menú de cuenta">
-          <span className="grid size-8 place-items-center rounded-full bg-ink text-[13px] font-semibold text-white">{first[0]?.toUpperCase()}</span>
+          <span className="grid size-8 place-items-center rounded-full bg-ink text-[13px] font-semibold text-on-ink">{first[0]?.toUpperCase()}</span>
           <span className="hidden max-w-24 truncate text-sm font-medium lg:block">{first}</span>
           <ChevronDown className="hidden size-3.5 text-muted transition-transform group-open:rotate-180 lg:block" />
         </summary>
@@ -93,7 +94,6 @@ async function HeaderActions() {
 }
 
 async function CategoryNav() {
-  await connection();
   const tree = await getCategoryTree();
   return (
     <nav aria-label="Categorías" className="border-t border-line">

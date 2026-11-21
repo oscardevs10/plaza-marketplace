@@ -118,7 +118,7 @@ export async function CatalogView({ base, raw, category, offersOnly, heading }: 
       <div className="mt-6 grid gap-8 lg:grid-cols-[240px_1fr]">
         <aside>
           <details className="card group p-4 lg:hidden">
-            <summary className="flex items-center gap-2 text-sm font-medium"><SlidersHorizontal className="size-4" /> Filtros {chips.length > 0 && <span className="rounded-full bg-ink px-1.5 text-[11px] text-white">{chips.length}</span>}</summary>
+            <summary className="flex items-center gap-2 text-sm font-medium"><SlidersHorizontal className="size-4" /> Filtros {chips.length > 0 && <span className="rounded-full bg-ink px-1.5 text-[11px] text-on-ink">{chips.length}</span>}</summary>
             <div className="mt-4">{filterForm}</div>
           </details>
           <div className="sticky top-32 hidden lg:block">{filterForm}</div>

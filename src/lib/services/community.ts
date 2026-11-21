@@ -1,5 +1,6 @@
 import { AppError } from '@/lib/errors';
 import 'server-only';
+import { invalidateCatalog } from '@/lib/cache';
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import { db, schema } from '@/lib/db';
 import { slugify } from '@/lib/utils';
@@ -32,8 +33,9 @@ export async function toggleFollow(userId: string, storeId: string) {
   if (!store) throw new CommunityError('Tienda no disponible');
   if (store.ownerId === userId) throw new CommunityError('No puedes seguir tu propia tienda');
   const removed = await db.delete(storeFollowers).where(and(eq(storeFollowers.userId, userId), eq(storeFollowers.storeId, storeId))).returning();
-  if (removed.length) return false;
+  if (removed.length) { invalidateCatalog(); return false; }
   await db.insert(storeFollowers).values({ userId, storeId }).onConflictDoNothing();
+  invalidateCatalog();
   await notify(store.ownerId, { type: 'new_follower', title: 'Tienes un nuevo seguidor', body: `Alguien empezó a seguir ${store.name}.`, link: '/vendedor' });
   return true;
 }

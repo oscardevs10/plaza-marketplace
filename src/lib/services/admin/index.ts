@@ -41,6 +41,7 @@ export const FLAGGED_PAYMENT_ACTIONS = ['payment.mismatch', 'payment.paid-but-cl
 export function integrationStatus() {
   return [
     ...Object.values(PROVIDERS).map((p) => ({ label: p.label, ok: p.isConfigured() })),
+    { label: 'Correo (Gmail / SMTP)', ok: !!process.env.SMTP_USER && !!process.env.SMTP_PASS },
     { label: 'Correo (Resend)', ok: !!process.env.RESEND_API_KEY && !!process.env.EMAIL_FROM },
   ];
 }

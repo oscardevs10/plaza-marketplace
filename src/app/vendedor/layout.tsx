@@ -1,7 +1,7 @@
 import { Suspense, type ReactNode } from 'react';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { BarChart3, Boxes, CirclePlus, LayoutDashboard, Package, Settings, ShoppingBag, Star, Store, TicketPercent, TriangleAlert } from 'lucide-react';
+import { BarChart3, Boxes, CirclePlus, LayoutDashboard, Package, MessageCircleQuestion, Settings, ShoppingBag, Star, Store, TicketPercent, TriangleAlert } from 'lucide-react';
 import { DashboardShell, type NavItem } from '@/components/dashboard-shell';
 import { Skeleton } from '@/components/ui/misc';
 import { getCurrentUser } from '@/lib/auth/session';
@@ -14,6 +14,7 @@ const nav: NavItem[] = [
   { href: '/vendedor/productos/nuevo', label: 'Publicar', icon: <CirclePlus /> },
   { href: '/vendedor/pedidos', label: 'Pedidos', icon: <ShoppingBag /> },
   { href: '/vendedor/inventario', label: 'Inventario', icon: <Boxes /> },
+  { href: '/vendedor/preguntas', label: 'Preguntas', icon: <MessageCircleQuestion /> },
   { href: '/vendedor/resenas', label: 'Reseñas', icon: <Star /> },
   { href: '/vendedor/estadisticas', label: 'Estadísticas', icon: <BarChart3 /> },
   { href: '/vendedor/cupones', label: 'Cupones', icon: <TicketPercent /> },

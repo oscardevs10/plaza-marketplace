@@ -10,6 +10,7 @@ import { addToCart, setCartQuantity } from '@/lib/services/cart';
 import { placeOrder, startPayment, cancelPendingOrder, markDelivered, processProviderEvent } from '@/lib/services/orders';
 import { toggleFavorite, toggleFollow, createReport } from '@/lib/services/community';
 import { createReview, toggleHelpful } from '@/lib/services/reviews';
+import { askQuestion } from '@/lib/services/questions';
 import { filesFrom, saveImage } from '@/lib/storage';
 import { LIMITS, needsEmailCheck } from '@/lib/config';
 import { rateLimit } from '@/lib/security';
@@ -183,4 +184,16 @@ export async function createReviewAction(orderItemId: string, _: ActionState, fd
   });
   if (res?.error) return res;
   redirect(`/producto/${slug}?resena=publicada#resenas`);
+}
+
+export async function askQuestionAction(productId: string, _: ActionState, fd: FormData): Promise<ActionState> {
+  const user = await getCurrentUser();
+  if (!user) redirect('/entrar');
+  return runAction(async () => {
+    if (!uuid.safeParse(productId).success) throw new AppError('Producto no encontrado');
+    if (!(await rateLimit('question', 10, 3600, user.id))) throw new AppError('Has hecho muchas preguntas seguidas. Intenta más tarde.');
+    await askQuestion(user, productId, str(fd, 'body', 600));
+    revalidatePath('/producto/[slug]', 'page');
+    return 'Pregunta enviada. Te avisaremos cuando la tienda responda.';
+  });
 }

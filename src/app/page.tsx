@@ -1,6 +1,5 @@
 import { Suspense, cache } from 'react';
 import Link from 'next/link';
-import { connection } from 'next/server';
 import { ArrowRight, ShieldCheck, Star, Store as StoreIcon, Cpu, Shirt, Sofa, Dumbbell, Sparkles, BookOpen, Tag } from 'lucide-react';
 import { getHomeSections, getProductsByIds, type ProductCard } from '@/lib/services/catalog';
 import { getCurrentUser } from '@/lib/auth/session';
@@ -9,12 +8,11 @@ import { ProductGrid, ProductGridSkeleton } from '@/components/product/product-c
 import { ButtonLink } from '@/components/ui/button';
 import { Stars, Skeleton, DemoBadge } from '@/components/ui/misc';
 import { APP_NAME } from '@/lib/config';
+import { RecentlyViewed } from '@/components/product/recently-viewed';
 
 // Una sola consulta por petición, compartida por todas las secciones (React.cache).
-const sections = cache(async () => {
-  await connection(); // siempre datos frescos: precios y existencias cambian
-  return getHomeSections();
-});
+// Datos en caché (se renuevan cada minuto o al cambiar el catálogo): la portada se sirve prerenderizada.
+const sections = cache(getHomeSections);
 
 export default function Home() {
   return (
@@ -28,6 +26,7 @@ export default function Home() {
       <Suspense fallback={<div className="mt-16 h-64 skeleton" />}><FeaturedStores /></Suspense>
       <Section title="Mejor calificados" href="/buscar?sort=calificacion" icon={<Star className="size-4 fill-star text-star" />}><Rail pick="topRated" /></Section>
       <Section title="Recién llegados" href="/buscar?sort=nuevos"><Rail pick="newest" /></Section>
+      <RecentlyViewed />
       <SellCta />
     </main>
   );
@@ -36,7 +35,7 @@ export default function Home() {
 function Hero() {
   return (
     <section className="mt-6 grid gap-4 lg:grid-cols-[1.6fr_1fr]">
-      <div className="relative overflow-hidden rounded-2xl bg-ink px-7 py-10 text-white sm:px-12 sm:py-14">
+      <div className="relative overflow-hidden rounded-2xl bg-[#0c0c10] px-7 py-10 text-white ring-1 ring-white/5 sm:px-12 sm:py-14">
         <div className="absolute -top-24 -right-24 size-80 rounded-full bg-brand/30 blur-3xl" aria-hidden />
         <div className="relative max-w-lg animate-fade-up">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium ring-1 ring-white/15 ring-inset"><ShieldCheck className="size-3.5" /> Compra protegida en cada pedido</span>
@@ -52,13 +51,13 @@ function Hero() {
         <Link href="/categoria/electronica" className="group relative flex min-h-40 flex-col justify-end overflow-hidden rounded-2xl bg-subtle p-6">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=75&auto=format&fit=crop" alt="" className="absolute inset-0 size-full object-cover transition-transform duration-700 group-hover:scale-105" />
-          <div className="absolute inset-0 bg-gradient-to-t from-ink/70 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
           <div className="relative text-white"><div className="text-xs font-medium text-white/80">Electrónica</div><div className="text-lg font-semibold">Audio que se siente</div></div>
         </Link>
         <Link href="/categoria/hogar" className="group relative flex min-h-40 flex-col justify-end overflow-hidden rounded-2xl bg-subtle p-6">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800&q=75&auto=format&fit=crop" alt="" className="absolute inset-0 size-full object-cover transition-transform duration-700 group-hover:scale-105" />
-          <div className="absolute inset-0 bg-gradient-to-t from-ink/70 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
           <div className="relative text-white"><div className="text-xs font-medium text-white/80">Hogar</div><div className="text-lg font-semibold">Detalles para tu casa</div></div>
         </Link>
       </div>
@@ -78,7 +77,7 @@ async function PopularCategories() {
           const Icon = ICONS[c.icon ?? ''] ?? Tag;
           return (
             <Link key={c.id} href={`/categoria/${c.slug}`} className="card group flex min-w-36 shrink-0 items-center gap-3 p-4 transition-shadow hover:shadow-lift">
-              <span className="grid size-10 place-items-center rounded-xl bg-subtle text-ink-2 transition-colors group-hover:bg-ink group-hover:text-white"><Icon className="size-5" /></span>
+              <span className="grid size-10 place-items-center rounded-xl bg-subtle text-ink-2 transition-colors group-hover:bg-ink group-hover:text-on-ink"><Icon className="size-5" /></span>
               <span><span className="block text-sm font-medium">{c.name}</span><span className="text-xs text-muted">{c.count} productos</span></span>
             </Link>
           );

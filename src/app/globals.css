@@ -15,6 +15,7 @@
   --color-subtle: #f6f6f7;
   --color-canvas: #fbfbfa;
   --color-surface: #ffffff;
+  --color-on-ink: #ffffff; /* texto sobre fondo ink (botones principales, insignias) */
 
   --color-brand: #f0521e;
   --color-brand-strong: #d43f0f;
@@ -52,9 +53,84 @@
     from { opacity: 0; transform: translateY(6px); }
     to { opacity: 1; transform: none; }
   }
+  @keyframes drawer-in {
+    from { transform: translateX(100%); }
+    to { transform: none; }
+  }
+  @keyframes sheet-in {
+    from { transform: translateY(100%); }
+    to { transform: none; }
+  }
   @keyframes pop {
     from { opacity: 0; transform: scale(0.97); }
     to { opacity: 1; transform: none; }
+  }
+}
+
+
+/*
+ * Modo oscuro: los mismos tokens con otros valores. Se activa con la preferencia del sistema,
+ * o a mano con <html data-theme="dark">; data-theme="light" fuerza el claro.
+ */
+:root { color-scheme: light; --skeleton-a: #efeff1; --skeleton-b: #f7f7f8; }
+:root[data-theme="dark"] {
+    --color-ink: #f4f4f6;
+    --color-ink-2: #d0d0d6;
+    --color-muted: #9b9ba6;
+    --color-faint: #6c6c76;
+    --color-line: #26262d;
+    --color-line-strong: #3a3a43;
+    --color-subtle: #1b1b21;
+    --color-canvas: #0b0b0e;
+    --color-surface: #131317;
+    --color-on-ink: #0c0c10;
+    --color-brand: #ff6332;
+    --color-brand-strong: #ff7a50;
+    --color-brand-soft: rgb(255 99 50 / 0.14);
+    --color-success: #4ade80;
+    --color-success-soft: rgb(74 222 128 / 0.12);
+    --color-warning: #fbbf24;
+    --color-warning-soft: rgb(251 191 36 / 0.12);
+    --color-danger: #f87171;
+    --color-danger-soft: rgb(248 113 113 / 0.12);
+    --color-info: #7aa2ff;
+    --color-info-soft: rgb(122 162 255 / 0.14);
+    --shadow-card: 0 0 0 1px rgb(255 255 255 / 0.06);
+    --shadow-lift: 0 12px 32px -12px rgb(0 0 0 / 0.7), 0 0 0 1px rgb(255 255 255 / 0.09);
+    --shadow-pop: 0 18px 48px -12px rgb(0 0 0 / 0.75), 0 0 0 1px rgb(255 255 255 / 0.1);
+    --skeleton-a: #1b1b21;
+    --skeleton-b: #24242b;
+    color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-ink: #f4f4f6;
+    --color-ink-2: #d0d0d6;
+    --color-muted: #9b9ba6;
+    --color-faint: #6c6c76;
+    --color-line: #26262d;
+    --color-line-strong: #3a3a43;
+    --color-subtle: #1b1b21;
+    --color-canvas: #0b0b0e;
+    --color-surface: #131317;
+    --color-on-ink: #0c0c10;
+    --color-brand: #ff6332;
+    --color-brand-strong: #ff7a50;
+    --color-brand-soft: rgb(255 99 50 / 0.14);
+    --color-success: #4ade80;
+    --color-success-soft: rgb(74 222 128 / 0.12);
+    --color-warning: #fbbf24;
+    --color-warning-soft: rgb(251 191 36 / 0.12);
+    --color-danger: #f87171;
+    --color-danger-soft: rgb(248 113 113 / 0.12);
+    --color-info: #7aa2ff;
+    --color-info-soft: rgb(122 162 255 / 0.14);
+    --shadow-card: 0 0 0 1px rgb(255 255 255 / 0.06);
+    --shadow-lift: 0 12px 32px -12px rgb(0 0 0 / 0.7), 0 0 0 1px rgb(255 255 255 / 0.09);
+    --shadow-pop: 0 18px 48px -12px rgb(0 0 0 / 0.75), 0 0 0 1px rgb(255 255 255 / 0.1);
+    --skeleton-a: #1b1b21;
+    --skeleton-b: #24242b;
+    color-scheme: dark;
   }
 }
 
@@ -73,7 +149,7 @@
   .card { @apply rounded-xl bg-surface shadow-card; }
   .skeleton {
     @apply rounded-md;
-    background: linear-gradient(90deg, #efeff1 0, #f7f7f8 120px, #efeff1 240px);
+    background: linear-gradient(90deg, var(--skeleton-a) 0, var(--skeleton-b) 120px, var(--skeleton-a) 240px);
     background-size: 800px 100%;
     animation: var(--animate-shimmer);
   }

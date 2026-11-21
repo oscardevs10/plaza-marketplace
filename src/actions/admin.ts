@@ -1,5 +1,6 @@
 'use server';
 
+import { invalidateCatalog } from '@/lib/cache';
 import { revalidatePath } from 'next/cache';
 import { and, count, eq, isNotNull, isNull } from 'drizzle-orm';
 import { AppError, int, runAction, str, type ActionState } from '@/lib/errors';
@@ -18,6 +19,7 @@ const { users, userRoles, roles, stores, products, orders, categories, platformC
 
 // Los cambios de moderación afectan el sitio público: se invalida todo el árbol.
 const done = (msg: string) => {
+  invalidateCatalog();
   revalidatePath('/', 'layout');
   return msg;
 };

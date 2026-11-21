@@ -56,12 +56,12 @@ export default async function CheckoutPage(props: PageProps<'/checkout'>) {
         <ActionForm action={checkoutAction} id="checkout" className="space-y-6">
           {Object.entries(coupons).map(([sid, code]) => <input key={sid} type="hidden" name={`coupon:${sid}`} value={code} />)}
           <section className="card p-5 sm:p-6">
-            <h2 className="flex items-center gap-2 font-semibold"><span className="grid size-6 place-items-center rounded-full bg-ink text-xs text-white">1</span>Dirección de entrega</h2>
+            <h2 className="flex items-center gap-2 font-semibold"><span className="grid size-6 place-items-center rounded-full bg-ink text-xs text-on-ink">1</span>Dirección de entrega</h2>
             <div className="mt-5"><AddressFields saved={saved} defaultName={user.name} /></div>
           </section>
 
           <section className="card p-5 sm:p-6">
-            <h2 className="flex items-center gap-2 font-semibold"><span className="grid size-6 place-items-center rounded-full bg-ink text-xs text-white">2</span>Método de envío</h2>
+            <h2 className="flex items-center gap-2 font-semibold"><span className="grid size-6 place-items-center rounded-full bg-ink text-xs text-on-ink">2</span>Método de envío</h2>
             <ul className="mt-4 space-y-2">
               {cart.groups.map((g) => (
                 <li key={g.store.id} className="flex items-center justify-between gap-4 rounded-xl border border-line p-3.5 text-sm">
@@ -73,7 +73,7 @@ export default async function CheckoutPage(props: PageProps<'/checkout'>) {
           </section>
 
           <section className="card p-5 sm:p-6">
-            <h2 className="flex items-center gap-2 font-semibold"><span className="grid size-6 place-items-center rounded-full bg-ink text-xs text-white">3</span>Método de pago</h2>
+            <h2 className="flex items-center gap-2 font-semibold"><span className="grid size-6 place-items-center rounded-full bg-ink text-xs text-on-ink">3</span>Método de pago</h2>
             {providers.length === 0 ? (
               <p className="mt-4 text-sm text-danger">No hay métodos de pago disponibles en este momento.</p>
             ) : (
@@ -105,7 +105,7 @@ export default async function CheckoutPage(props: PageProps<'/checkout'>) {
                       <div className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-subtle">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         {l.image && <img src={l.image} alt="" className="size-full object-cover" />}
-                        <span className="absolute -top-1 -right-1 grid size-5 place-items-center rounded-full bg-ink text-[10px] font-semibold text-white">{l.quantity}</span>
+                        <span className="absolute -top-1 -right-1 grid size-5 place-items-center rounded-full bg-ink text-[10px] font-semibold text-on-ink">{l.quantity}</span>
                       </div>
                       <div className="min-w-0 flex-1"><div className="line-clamp-2 leading-snug">{l.title}</div>{l.variantName !== 'Único' && <div className="text-xs text-muted">{l.variantName}</div>}</div>
                       <div className="tabular-nums">{formatMoney(l.unitPrice * l.quantity)}</div>

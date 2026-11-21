@@ -43,9 +43,9 @@ export function FilterTabs({ items }: { items: { label: string; href: string; ac
     <nav className="scrollbar-none -mx-1 mb-4 flex gap-1 overflow-x-auto px-1" aria-label="Filtros">
       {items.map((t) => (
         <Link key={t.href} href={t.href} aria-current={t.active ? 'page' : undefined}
-          className={cn('flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors', t.active ? 'bg-ink text-white' : 'text-muted hover:bg-subtle hover:text-ink')}>
+          className={cn('flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors', t.active ? 'bg-ink text-on-ink' : 'text-muted hover:bg-subtle hover:text-ink')}>
           {t.label}
-          {t.count != null && <span className={cn('tabular-nums text-xs', t.active ? 'text-white/70' : 'text-faint')}>{t.count}</span>}
+          {t.count != null && <span className={cn('tabular-nums text-xs', t.active ? 'text-on-ink/70' : 'text-faint')}>{t.count}</span>}
         </Link>
       ))}
     </nav>

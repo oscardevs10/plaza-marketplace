@@ -10,6 +10,8 @@ import { reviewableItems } from '@/lib/services/reviews';
 import { toggleFavoriteAction, toggleFollowAction, reportAction, helpfulAction } from '@/actions/shop';
 import { Gallery } from '@/components/product/gallery';
 import { PurchasePanel } from '@/components/product/purchase-panel';
+import { ProductQuestions } from '@/components/product/questions';
+import { RecordView, RecentlyViewed } from '@/components/product/recently-viewed';
 import { ProductGrid } from '@/components/product/product-card';
 import { FavoriteButton, FollowButton, HelpfulButton, ReportForm } from '@/components/community/toggles';
 import { Badge, Stars, Skeleton, DemoBadge } from '@/components/ui/misc';
@@ -120,9 +122,13 @@ export default async function ProductPage(props: PageProps<'/producto/[slug]'>) 
         </div>
       </section>
 
+      <Suspense fallback={<div className="skeleton mt-16 h-48 rounded-xl" />}><ProductQuestions productId={p.id} ownerId={p.store.ownerId} slug={p.slug} /></Suspense>
+
       <Reviews productId={p.id} summary={summary} sort={sp.orden === 'recientes' ? 'recent' : 'helpful'} rating={Number(sp.estrellas) || undefined} />
 
       <Suspense fallback={null}><Related productId={p.id} categoryId={p.categoryId} storeId={p.storeId} storeName={p.store.name} storeSlug={p.store.slug} /></Suspense>
+      <RecordView productId={p.id} />
+      <RecentlyViewed exclude={p.id} />
     </main>
   );
 }
@@ -162,7 +168,7 @@ async function Follow({ storeId, slug, ownerId }: { storeId: string; slug: strin
 
 async function Reviews({ productId, summary, sort, rating }: { productId: string; summary: Awaited<ReturnType<typeof getReviewSummary>>; sort: 'helpful' | 'recent'; rating?: number }) {
   const reviews = await listReviews(productId, { sort, rating });
-  const tab = (label: string, href: string, active: boolean) => <Link href={href} scroll={false} className={active ? 'rounded-md bg-ink px-2.5 py-1 text-white' : 'rounded-md px-2.5 py-1 text-muted hover:bg-subtle hover:text-ink'}>{label}</Link>;
+  const tab = (label: string, href: string, active: boolean) => <Link href={href} scroll={false} className={active ? 'rounded-md bg-ink px-2.5 py-1 text-on-ink' : 'rounded-md px-2.5 py-1 text-muted hover:bg-subtle hover:text-ink'}>{label}</Link>;
   const q = (o: Record<string, string | undefined>) => `?${new URLSearchParams(Object.entries(o).filter(([, v]) => v) as [string, string][])}#resenas`;
   return (
     <section id="resenas" className="mt-16 scroll-mt-32 border-t border-line pt-10">

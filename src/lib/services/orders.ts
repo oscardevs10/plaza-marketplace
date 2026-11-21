@@ -1,5 +1,6 @@
 import { AppError } from '@/lib/errors';
 import 'server-only';
+import { invalidateCatalog } from '@/lib/cache';
 import { and, eq, inArray, lt, sql } from 'drizzle-orm';
 import { db, schema } from '@/lib/db';
 import type { DB } from '@/lib/db/client';
@@ -92,6 +93,7 @@ export async function placeOrder(buyer: { id: string; name: string; email: strin
     return o;
   });
 
+  invalidateCatalog(); // existencias cambiaron
   await audit(buyer.id, 'order.placed', 'order', order.id, { total: order.total, provider: provider.id });
   // Aviso a la tienda cuando una compra agota una opción.
   const emptied = await db.selectDistinct({ title: orderItems.title, variant: orderItems.variantName, ownerId: stores.ownerId })
@@ -152,6 +154,7 @@ export async function expireStaleOrders() {
   const stale = await db.select({ id: orders.id }).from(orders)
     .where(and(eq(orders.status, 'pending_payment'), lt(orders.expiresAt, sql`now()`))).limit(50);
   for (const o of stale) await db.transaction((tx) => releaseOrder(tx, o.id, 'expired'));
+  if (stale.length) invalidateCatalog();
   return stale.length;
 }
 
@@ -162,6 +165,7 @@ export async function cancelPendingOrder(orderId: string, buyerId: string) {
     return releaseOrder(tx, orderId, 'buyer');
   });
   if (!ok) throw new OrderError('Solo se pueden cancelar pedidos pendientes de pago');
+  invalidateCatalog();
   await audit(buyerId, 'order.cancelled', 'order', orderId);
 }
 
@@ -215,6 +219,7 @@ export async function applyVerifiedPayment(providerId: ProviderId, eventId: stri
     return { kind: 'noop' as const, order: o };
   });
 
+  if (effects.kind !== 'noop') invalidateCatalog(); // ventas y existencias
   const o = effects.order;
   const num = orderNumber(o.number);
   if (effects.kind === 'paid') {

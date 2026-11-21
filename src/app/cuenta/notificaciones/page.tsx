@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Bell, Package, Star, Truck, CreditCard, UserPlus, AlertTriangle, MessageSquare } from 'lucide-react';
+import { Bell, Package, Star, Truck, CreditCard, UserPlus, AlertTriangle, MessageSquare, MessageCircleQuestion } from 'lucide-react';
 import { requireUser } from '@/lib/auth/guards';
 import { listNotifications } from '@/lib/services/community';
 import { markNotificationsReadAction } from '@/actions/account';
@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: 'Notificaciones' };
 
 const ICON: Record<string, typeof Bell> = {
   order_placed: Package, new_order: Package, payment_confirmed: CreditCard, order_shipped: Truck, order_delivered: Package, order_status: Package,
-  new_review: Star, review_response: MessageSquare, out_of_stock: AlertTriangle, new_follower: UserPlus, moderation: AlertTriangle,
+  new_review: Star, review_response: MessageSquare, new_question: MessageCircleQuestion, question_answered: MessageCircleQuestion, out_of_stock: AlertTriangle, new_follower: UserPlus, moderation: AlertTriangle,
 };
 
 export default async function NotificationsPage() {
@@ -30,7 +30,7 @@ export default async function NotificationsPage() {
             const Icon = ICON[n.type] ?? Bell;
             const body = (
               <div className="flex gap-3.5 p-4">
-                <span className={`grid size-9 shrink-0 place-items-center rounded-full ${n.readAt ? 'bg-subtle text-muted' : 'bg-ink text-white'}`}><Icon className="size-4" /></span>
+                <span className={`grid size-9 shrink-0 place-items-center rounded-full ${n.readAt ? 'bg-subtle text-muted' : 'bg-ink text-on-ink'}`}><Icon className="size-4" /></span>
                 <div className="min-w-0 flex-1">
                   <div className={`text-sm ${n.readAt ? 'text-ink-2' : 'font-medium'}`}>{n.title}</div>
                   {n.body && <div className="mt-0.5 text-sm text-muted">{n.body}</div>}

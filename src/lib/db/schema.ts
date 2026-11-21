@@ -435,6 +435,24 @@ export const reviewVotes = pgTable('review_votes', {
   createdAt: createdAt(),
 }, (t) => [primaryKey({ columns: [t.reviewId, t.userId] })]);
 
+// ---------- Preguntas al vendedor ----------
+export const questionStatus = pgEnum('question_status', ['published', 'hidden']);
+export const productQuestions = pgTable('product_questions', {
+  id: uuid().primaryKey().defaultRandom(),
+  productId: uuid().notNull().references(() => products.id, { onDelete: 'cascade' }),
+  storeId: uuid().notNull().references(() => stores.id, { onDelete: 'cascade' }),
+  userId: uuid().notNull().references(() => users.id, { onDelete: 'cascade' }),
+  body: text().notNull(),
+  answer: text(),
+  answeredBy: uuid().references(() => users.id, { onDelete: 'set null' }),
+  answeredAt: timestamp({ withTimezone: true }),
+  status: questionStatus().default('published').notNull(),
+  createdAt: createdAt(),
+}, (t) => [
+  index('product_questions_product_idx').on(t.productId, t.status, t.createdAt),
+  index('product_questions_store_idx').on(t.storeId, t.answeredAt),
+]);
+
 // ---------- Comunidad y moderación ----------
 export const favorites = pgTable('favorites', {
   userId: uuid().notNull().references(() => users.id, { onDelete: 'cascade' }),

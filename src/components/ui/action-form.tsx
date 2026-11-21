@@ -6,17 +6,23 @@ import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import type { ActionState } from '@/lib/errors';
 import { buttonClass } from './button';
 import { cn } from '@/lib/utils';
+import { toast } from '@/components/toaster';
 
 type Action = (state: ActionState, formData: FormData) => Promise<ActionState>;
 
 /**
  * Formulario conectado a una Server Action con useActionState.
- * Muestra el mensaje de éxito/error que devuelve runAction() y funciona sin JavaScript.
+ * El aviso de éxito se lanza en cuanto responde la acción (aunque el formulario desaparezca al refrescar la página);
+ * los errores se muestran junto al formulario.
  */
 export function ActionForm({ action, children, className, resetOnSuccess, hideSuccess, id }: {
   action: Action; children: ReactNode; className?: string; resetOnSuccess?: boolean; hideSuccess?: boolean; id?: string;
 }) {
-  const [state, formAction] = useActionState(action, null);
+  const [state, formAction] = useActionState(async (prev: ActionState, fd: FormData) => {
+    const r = await action(prev, fd);
+    if (r?.ok && !hideSuccess) toast(r.ok);
+    return r;
+  }, null);
   const ref = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state?.ok && resetOnSuccess) ref.current?.reset();
@@ -24,13 +30,18 @@ export function ActionForm({ action, children, className, resetOnSuccess, hideSu
   return (
     <form ref={ref} action={formAction} className={className} id={id} noValidate={false}>
       {children}
-      <FormMessage state={state} hideSuccess={hideSuccess} />
+      <FormMessage state={state} hideSuccess />
     </form>
   );
 }
 
+/** Errores: en línea, junto al formulario. Éxitos: aviso breve (toast). */
 export function FormMessage({ state, hideSuccess }: { state: ActionState; hideSuccess?: boolean }) {
-  if (!state || (state.ok && hideSuccess)) return null;
+  const okKey = state?.ok && !hideSuccess ? state.at : undefined;
+  useEffect(() => {
+    if (okKey && state?.ok) toast(state.ok);
+  }, [okKey]); // eslint-disable-line react-hooks/exhaustive-deps -- solo al recibir un resultado nuevo
+  if (!state || state.ok) return null;
   return (
     <p
       key={state.at}

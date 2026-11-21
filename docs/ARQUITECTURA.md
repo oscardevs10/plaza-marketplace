@@ -12,7 +12,7 @@
 | Autenticación | Propia: sesiones en BD, cookie `HttpOnly`, scrypt | Control total de roles; sin dependencia externa |
 | Imágenes | sharp + almacenamiento local (driver intercambiable) | Re-codificación a WebP, sin metadatos, dos tamaños |
 | Pagos | Interfaz `PaymentProvider` con Sandbox, Stripe y Mercado Pago (REST, sin SDK) | Agregar un proveedor = implementar 5 métodos |
-| Correo | Bandeja `email_outbox` + Resend | Registro de cada envío; buzón local en desarrollo |
+| Correo | Bandeja `email_outbox` + Gmail (SMTP) o Resend | Registro de cada envío; buzón local en desarrollo |
 | Hosting sugerido | Vercel + Neon + Cloudflare R2 + Resend | Todos con plan gratuito |
 
 ## Estructura
@@ -81,6 +81,17 @@ Solo con un artículo de un sub-pedido **entregado** que pertenezca a la persona
 - Cabeceras: `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, HSTS en producción.
 - Auditoría de acciones sensibles en `audit_logs`; la dirección del comprador solo se muestra al vendedor cuando el pedido está pagado.
 
+## Experiencia de compra
+
+- **Modo oscuro:** los mismos tokens de color con otros valores (`globals.css`). Sigue al sistema o se fija con el botón de tema (se guarda en el navegador; un script en `<head>` lo aplica antes de pintar, sin destello).
+- **Celular:** barra inferior (Inicio, Categorías, Buscar, Carrito, Cuenta), hoja de categorías y barra fija de compra en la página de producto.
+- **Carrito lateral** al agregar productos, **avisos breves** (toasts) para confirmaciones, **corazón de favoritos** en cada tarjeta (los favoritos se cargan una vez por visita), **vistos recientemente** (en el navegador) y **visor de fotos** a pantalla completa con zoom y deslizamiento.
+- **Preguntas al vendedor:** públicas una vez respondidas; se bloquean correos y teléfonos para que las compras no salgan de la plataforma (y de la compra protegida). La tienda responde u oculta desde `/vendedor/preguntas`.
+
+## Caché
+
+Las lecturas públicas del catálogo (`services/catalog.ts`) usan `"use cache"` con la etiqueta `catalog` y se renuevan cada minuto. Cualquier cambio que afecte lo que ve un comprador (guardar producto, existencias, pedidos y pagos —incluidos webhooks—, reseñas, seguidores, moderación) llama a `invalidateCatalog()` (`lib/cache.ts`), así la siguiente visita ya ve el dato nuevo. Lo personal (sesión, carrito, favoritos) nunca se cachea.
+
 ## SEO
 
 URLs amigables (`/producto/slug`, `/tienda/slug`, `/categoria/slug`), metadatos y Open Graph por página, URL canónica, `sitemap.xml` dinámico, `robots.txt`, datos estructurados `Product` (+ `AggregateRating`, `Offer`) y `Store`, búsquedas libres con `noindex`.
@@ -97,5 +108,5 @@ URLs amigables (`/producto/slug`, `/tienda/slug`, `/categoria/slug`), metadatos 
 - Liquidación a vendedores (Stripe Connect / Mercado Pago Marketplace) y conciliación.
 - Driver de almacenamiento S3/R2 para desplegar en serverless.
 - Integración con paqueterías mexicanas (Envia.com, Skydropx): la tabla `shipments` y los eventos ya están preparados.
-- Facturación CFDI, cancelación parcial por tienda, mensajería comprador-vendedor, modo oscuro.
+- Facturación CFDI, cancelación parcial por tienda, mensajería privada comprador-vendedor.
 - Los textos legales son plantillas: revisarlos con un abogado.

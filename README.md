@@ -58,7 +58,7 @@ Cuentas de demostración (contraseña `Demo12345!`):
 
 Notas:
 - Las fotos se guardan en la misma base de datos (no hay disco en Vercel). El plan gratis de Neon (0.5 GB) alcanza para unas 3,000 fotos.
-- Sin Resend no se envían correos: la confirmación de correo deja de ser obligatoria y no funciona "recuperar contraseña". Para activarlos agrega `RESEND_API_KEY` y `EMAIL_FROM`.
+- **Correos:** sin servicio de correo la confirmación de correo deja de ser obligatoria y no funciona "recuperar contraseña". La forma gratis más simple es Gmail: activa la verificación en dos pasos, crea una [contraseña de aplicación](https://myaccount.google.com/apppasswords) y agrega `SMTP_USER` (tu Gmail) y `SMTP_PASS` (la contraseña de 16 letras). También funciona Resend (`RESEND_API_KEY` + `EMAIL_FROM`) si tienes dominio propio.
 - Para cobrar de verdad agrega las llaves de Stripe o Mercado Pago (ver `.env.example`) y quita `ENABLE_SANDBOX_PAYMENTS`.
 - Cada `git push` a `main` publica una nueva versión.
 

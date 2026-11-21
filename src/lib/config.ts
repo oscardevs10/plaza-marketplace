@@ -10,7 +10,7 @@ export const LOCALE = 'es-MX';
  * Confirmar el correo antes de comprar o vender solo tiene sentido si los correos realmente salen.
  * Por defecto se exige cuando hay servicio de correo (RESEND_API_KEY); se puede forzar con REQUIRE_VERIFIED_EMAIL.
  */
-export const REQUIRE_VERIFIED_EMAIL = process.env.REQUIRE_VERIFIED_EMAIL ? process.env.REQUIRE_VERIFIED_EMAIL === 'true' : !!process.env.RESEND_API_KEY;
+export const REQUIRE_VERIFIED_EMAIL = process.env.REQUIRE_VERIFIED_EMAIL ? process.env.REQUIRE_VERIFIED_EMAIL === 'true' : !!(process.env.RESEND_API_KEY || (process.env.SMTP_USER && process.env.SMTP_PASS));
 export const needsEmailCheck = (u: { emailVerified: boolean }) => REQUIRE_VERIFIED_EMAIL && !u.emailVerified;
 
 export const LIMITS = {

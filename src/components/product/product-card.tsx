@@ -3,6 +3,7 @@ import type { ProductCard as Card } from '@/lib/services/catalog';
 import { Price, Stars, Badge, DemoBadge } from '@/components/ui/misc';
 import { discountPercent, cn } from '@/lib/utils';
 import { QuickAdd } from './add-to-cart-button';
+import { FavoriteHeart } from '@/components/community/favorites';
 
 const CONDITION: Record<string, string> = { used: 'Usado', refurbished: 'Reacondicionado' };
 
@@ -30,8 +31,9 @@ export function ProductCard({ p, priority }: { p: Card; priority?: boolean }) {
           {out && <Badge tone="dark">Agotado</Badge>}
           {CONDITION[p.condition] && <Badge>{CONDITION[p.condition]}</Badge>}
         </div>
-        {p.isDemo && <div className="absolute top-2.5 right-2.5"><DemoBadge /></div>}
+        {p.isDemo && <div className="absolute bottom-2.5 left-2.5"><DemoBadge /></div>}
       </Link>
+      <FavoriteHeart productId={p.id} className="absolute top-2.5 right-2.5 z-10" />
       <div className="flex flex-1 flex-col gap-1.5 p-3.5">
         <Link href={`/tienda/${p.storeSlug}`} className="w-fit text-xs text-muted hover:text-ink">{p.storeName}</Link>
         <h3 className="line-clamp-2 min-h-[2.5em] text-sm leading-[1.25] font-medium">

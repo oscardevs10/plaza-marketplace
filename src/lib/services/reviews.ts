@@ -1,5 +1,6 @@
 import { AppError } from '@/lib/errors';
 import 'server-only';
+import { invalidateCatalog } from '@/lib/cache';
 import { and, eq, sql } from 'drizzle-orm';
 import { db, schema } from '@/lib/db';
 import type { DB } from '@/lib/db/client';
@@ -60,6 +61,7 @@ export async function createReview(userId: string, input: { orderItemId: string;
     return r;
   });
 
+  invalidateCatalog();
   const [info] = await db.select({ ownerId: stores.ownerId, title: products.title, slug: products.slug })
     .from(products).innerJoin(stores, eq(stores.id, products.storeId)).where(eq(products.id, review.productId));
   await notify(info.ownerId, { type: 'new_review', title: `Nueva reseña de ${review.rating}★`, body: `En "${info.title}".`, link: '/vendedor/resenas' }, { email: true });
@@ -76,7 +78,7 @@ export async function toggleHelpful(userId: string, reviewId: string) {
     if (!removed.length) await tx.insert(reviewVotes).values({ reviewId, userId });
     await tx.update(reviews).set({ helpfulCount: sql`(select count(*)::int from review_votes where review_id = ${reviewId})` }).where(eq(reviews.id, reviewId));
     return !removed.length;
-  });
+  }).finally(invalidateCatalog);
 }
 
 /** Respuesta pública del vendedor (una por reseña, editable). Verifica que la reseña sea de su tienda. */
@@ -89,6 +91,7 @@ export async function respondToReview(store: { id: string }, authorId: string, r
     .onConflictDoUpdate({ target: reviewResponses.reviewId, set: { body, updatedAt: new Date() } });
   const [prod] = await db.select({ slug: products.slug }).from(products).where(eq(products.id, r.productId));
   await notify(r.userId, { type: 'review_response', title: 'La tienda respondió tu reseña', link: `/producto/${prod.slug}#resenas` });
+  invalidateCatalog();
   await audit(authorId, 'review.responded', 'review', reviewId);
 }
 
@@ -99,5 +102,6 @@ export async function setReviewStatus(adminId: string, reviewId: string, status:
     if (!r) throw new ReviewError('Reseña no encontrada');
     await recomputeRatings(tx, r.productId, r.storeId);
   });
+  invalidateCatalog();
   await audit(adminId, `review.${status}`, 'review', reviewId);
 }

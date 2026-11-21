@@ -26,7 +26,7 @@ export function createDb(opts: { url?: string; dataDir?: string } = {}): DB {
     // prepare: false → compatible con poolers en modo transacción (Neon, Supabase). Pocas conexiones por instancia serverless.
     return drizzlePostgres(postgres(url, { max: Number(process.env.DATABASE_POOL_SIZE ?? (process.env.VERCEL ? 3 : 10)), prepare: false }), { schema, casing: 'snake_case' });
   }
-  if (process.env.NODE_ENV === 'production' && !opts.dataDir) {
+  if (process.env.NODE_ENV === 'production' && !opts.dataDir && !process.env.PGLITE_DIR) { // PGLITE_DIR: compilar/probar en local
     throw new Error('DATABASE_URL es obligatoria en producción');
   }
   const dir = opts.dataDir ?? process.env.PGLITE_DIR ?? '.data/pglite';

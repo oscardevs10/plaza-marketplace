@@ -12,7 +12,7 @@ const tones: Record<Tone, string> = {
   warning: 'bg-warning-soft text-warning ring-warning/15',
   danger: 'bg-danger-soft text-danger ring-danger/15',
   info: 'bg-info-soft text-info ring-info/15',
-  dark: 'bg-ink text-white ring-ink',
+  dark: 'bg-ink text-on-ink ring-ink',
 };
 export function Badge({ tone = 'neutral', children, className }: { tone?: Tone; children: ReactNode; className?: string }) {
   return <span className={cn('inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-semibold ring-1 ring-inset whitespace-nowrap', tones[tone], className)}>{children}</span>;
@@ -73,7 +73,7 @@ export function Pagination({ page, total, pageSize, href }: { page: number; tota
       {nums.map((n, i) => (
         <span key={n} className="flex items-center gap-1">
           {i > 0 && n - nums[i - 1] > 1 && <span className="px-1 text-faint">…</span>}
-          <Link href={href(n)} aria-current={n === page ? 'page' : undefined} className={cn(item, n === page ? 'bg-ink font-medium text-white' : 'hover:bg-subtle')}>{n}</Link>
+          <Link href={href(n)} aria-current={n === page ? 'page' : undefined} className={cn(item, n === page ? 'bg-ink font-medium text-on-ink' : 'hover:bg-subtle')}>{n}</Link>
         </span>
       ))}
       {page < pages ? <Link href={href(page + 1)} className={cn(item, 'hover:bg-subtle')} aria-label="Siguiente"><ChevronRight className="size-4" /></Link> : <span className={cn(item, 'text-faint')}><ChevronRight className="size-4" /></span>}

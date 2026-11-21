@@ -69,7 +69,7 @@ export function SearchBox({ className, defaultValue = '' }: { className?: string
         maxLength={100}
         className="h-10 w-full rounded-full border border-line bg-subtle pr-24 pl-10 text-sm transition-[background-color,border-color,box-shadow] placeholder:text-muted hover:border-line-strong focus:border-ink focus:bg-surface focus:ring-4 focus:ring-ink/5 focus:outline-none"
       />
-      <button type="submit" className="absolute top-1 right-1 h-8 rounded-full bg-ink px-4 text-[13px] font-medium text-white transition-colors hover:bg-ink-2">Buscar</button>
+      <button type="submit" className="absolute top-1 right-1 h-8 rounded-full bg-ink px-4 text-[13px] font-medium text-on-ink transition-colors hover:bg-ink-2">Buscar</button>
       {open && visible.length > 0 && (
         <ul id={listId} role="listbox" className="absolute top-12 right-0 left-0 z-50 overflow-hidden rounded-xl bg-surface py-1.5 shadow-pop animate-pop">
           {visible.map((it, i) => (

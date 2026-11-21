@@ -5,7 +5,7 @@ import { emailLayout, sendEmail } from '@/lib/email';
 
 export type NotificationType =
   | 'order_placed' | 'new_order' | 'payment_confirmed' | 'order_shipped' | 'order_delivered' | 'order_status'
-  | 'new_review' | 'review_response' | 'out_of_stock' | 'new_follower' | 'moderation';
+  | 'new_review' | 'review_response' | 'out_of_stock' | 'new_follower' | 'moderation' | 'new_question' | 'question_answered';
 
 /**
  * Crea una notificación en el centro de notificaciones y, opcionalmente, la envía por correo.

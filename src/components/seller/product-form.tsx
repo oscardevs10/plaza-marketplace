@@ -85,7 +85,7 @@ export function ProductForm({ action, categories, product }: {
                   <input type="hidden" name="keepImage" value={im.id} />
                   {/* eslint-disable-next-line @next/next/no-img-element -- miniatura ya optimizada */}
                   <img src={im.thumbUrl ?? im.url} alt="" className="aspect-square w-full object-cover" />
-                  {i === 0 && <span className="absolute top-1.5 left-1.5 rounded bg-ink px-1.5 py-0.5 text-[10px] font-semibold text-white">Portada</span>}
+                  {i === 0 && <span className="absolute top-1.5 left-1.5 rounded bg-ink px-1.5 py-0.5 text-[10px] font-semibold text-on-ink">Portada</span>}
                   <div className="absolute inset-x-1.5 bottom-1.5 flex justify-between gap-1">
                     <span className="flex gap-1">
                       <IconBtn label="Mover antes" disabled={i === 0} onClick={() => move(i, -1)}><ArrowLeft /></IconBtn>

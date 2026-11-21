@@ -1,33 +1,47 @@
 import 'server-only';
 import { eq } from 'drizzle-orm';
 import { db, schema } from '@/lib/db';
+import nodemailer, { type Transporter } from 'nodemailer';
 import { APP_NAME, APP_URL } from '@/lib/config';
 
 /**
- * Todo correo pasa por la tabla email_outbox (registro y reintentos).
- * Con RESEND_API_KEY se envía de verdad; sin ella queda "capturado" y se puede ver en /dev/correos (solo desarrollo).
+ * Todo correo pasa por la tabla email_outbox (registro y reintentos). Proveedores, en este orden:
+ * - SMTP (p. ej. Gmail con contraseña de aplicación): SMTP_USER + SMTP_PASS (+ SMTP_HOST/SMTP_PORT, por defecto Gmail).
+ * - Resend: RESEND_API_KEY + EMAIL_FROM (requiere dominio propio verificado para enviar a cualquiera).
+ * Sin ninguno, el correo queda "capturado" y se ve en /dev/correos (solo desarrollo).
  */
 export async function sendEmail(to: string, subject: string, html: string) {
   const [row] = await db.insert(schema.emailOutbox).values({ to, subject, html }).returning({ id: schema.emailOutbox.id });
-  const key = process.env.RESEND_API_KEY, from = process.env.EMAIL_FROM;
-  if (!key || !from) {
-    await db.update(schema.emailOutbox).set({ status: 'captured' }).where(eq(schema.emailOutbox.id, row.id));
-    return;
-  }
+  const mark = (v: Partial<typeof schema.emailOutbox.$inferInsert>) => db.update(schema.emailOutbox).set(v).where(eq(schema.emailOutbox.id, row.id));
   try {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from, to, subject, html }),
-      signal: AbortSignal.timeout(10_000),
-    });
-    const data = (await res.json().catch(() => ({}))) as { id?: string; message?: string };
-    await db.update(schema.emailOutbox)
-      .set(res.ok ? { status: 'sent', providerId: data.id ?? null, sentAt: new Date() } : { status: 'failed', error: data.message ?? String(res.status) })
-      .where(eq(schema.emailOutbox.id, row.id));
+    if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+      const info = await smtp().sendMail({ from: process.env.EMAIL_FROM || `${APP_NAME} <${process.env.SMTP_USER}>`, to, subject, html });
+      await mark({ status: 'sent', providerId: info.messageId, sentAt: new Date() });
+    } else if (process.env.RESEND_API_KEY && process.env.EMAIL_FROM) {
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from: process.env.EMAIL_FROM, to, subject, html }),
+        signal: AbortSignal.timeout(10_000),
+      });
+      const data = (await res.json().catch(() => ({}))) as { id?: string; message?: string };
+      await mark(res.ok ? { status: 'sent', providerId: data.id ?? null, sentAt: new Date() } : { status: 'failed', error: data.message ?? String(res.status) });
+    } else {
+      await mark({ status: 'captured' });
+    }
   } catch (e) {
-    await db.update(schema.emailOutbox).set({ status: 'failed', error: String(e) }).where(eq(schema.emailOutbox.id, row.id));
+    await mark({ status: 'failed', error: String(e).slice(0, 500) });
   }
+}
+
+let transport: Transporter | undefined;
+function smtp() {
+  const port = Number(process.env.SMTP_PORT ?? 465);
+  return (transport ??= nodemailer.createTransport({
+    host: process.env.SMTP_HOST ?? 'smtp.gmail.com', port, secure: port === 465,
+    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    connectionTimeout: 10_000, greetingTimeout: 10_000, socketTimeout: 15_000,
+  }));
 }
 
 const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);

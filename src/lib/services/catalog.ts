@@ -1,6 +1,8 @@
 import 'server-only';
 import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, lte, ne, or, sql, type SQL } from 'drizzle-orm';
-import { db, schema, requestData } from '@/lib/db';
+import { cacheLife, cacheTag } from 'next/cache';
+import { db, schema } from '@/lib/db';
+import { CATALOG, CATALOG_LIFE } from '@/lib/cache';
 import { LIMITS } from '@/lib/config';
 
 const { products: p, stores: s, productImages, productVariants, categories, reviews, storeFollowers } = schema;
@@ -36,7 +38,9 @@ function cards(where: SQL | undefined, order: SQL[], limit: number, offset = 0) 
 }
 
 export async function getHomeSections() {
-  await requestData();
+  'use cache';
+  cacheLife(CATALOG_LIFE);
+  cacheTag(CATALOG);
   const [bestSellers, newest, offers, topRated, featured, featuredStores, popularCategories] = await Promise.all([
     cards(undefined, [desc(p.salesCount), desc(p.ratingAvg)], 10),
     cards(undefined, [desc(p.publishedAt)], 10),
@@ -63,7 +67,9 @@ export type SearchParams = {
 };
 
 export async function searchProducts(f: SearchParams) {
-  await requestData();
+  'use cache';
+  cacheLife(CATALOG_LIFE);
+  cacheTag(CATALOG);
   const where: (SQL | undefined)[] = [];
   const q = f.q?.trim().slice(0, 100);
   let rank: SQL | undefined;
@@ -105,13 +111,17 @@ export async function searchProducts(f: SearchParams) {
 }
 
 export async function getCategoryTree() {
-  await requestData();
+  'use cache';
+  cacheLife(CATALOG_LIFE);
+  cacheTag(CATALOG);
   const rows = await db.select().from(categories).where(eq(categories.active, true)).orderBy(asc(categories.position), asc(categories.name));
   return rows.filter((c) => !c.parentId).map((c) => ({ ...c, children: rows.filter((x) => x.parentId === c.id) }));
 }
 
 export async function getCategoryBySlug(slug: string) {
-  await requestData();
+  'use cache';
+  cacheLife(CATALOG_LIFE);
+  cacheTag(CATALOG);
   const [c] = await db.select().from(categories).where(and(eq(categories.slug, slug), eq(categories.active, true))).limit(1);
   if (!c) return null;
   const parent = c.parentId ? (await db.select().from(categories).where(eq(categories.id, c.parentId)).limit(1))[0] ?? null : null;
@@ -120,7 +130,9 @@ export async function getCategoryBySlug(slug: string) {
 }
 
 export async function getProductPage(slug: string) {
-  await requestData();
+  'use cache';
+  cacheLife(CATALOG_LIFE);
+  cacheTag(CATALOG);
   const product = await db.query.products.findFirst({
     where: eq(p.slug, slug),
     with: {
@@ -135,7 +147,9 @@ export async function getProductPage(slug: string) {
 }
 
 export async function getRelated(productId: string, categoryId: number, storeId: string) {
-  await requestData();
+  'use cache';
+  cacheLife(CATALOG_LIFE);
+  cacheTag(CATALOG);
   return Promise.all([
     cards(and(eq(p.categoryId, categoryId), ne(p.id, productId)), [desc(p.salesCount)], 8),
     cards(and(eq(p.storeId, storeId), ne(p.id, productId)), [desc(p.salesCount)], 8),
@@ -143,7 +157,9 @@ export async function getRelated(productId: string, categoryId: number, storeId:
 }
 
 export async function getReviewSummary(productId: string) {
-  await requestData();
+  'use cache';
+  cacheLife(CATALOG_LIFE);
+  cacheTag(CATALOG);
   const rows = await db.select({ rating: reviews.rating, n: sql<number>`count(*)::int` }).from(reviews)
     .where(and(eq(reviews.productId, productId), eq(reviews.status, 'published'))).groupBy(reviews.rating);
   const dist = [5, 4, 3, 2, 1].map((r) => ({ rating: r, count: rows.find((x) => x.rating === r)?.n ?? 0 }));
@@ -153,7 +169,9 @@ export async function getReviewSummary(productId: string) {
 }
 
 export async function listReviews(productId: string, opts: { sort?: 'helpful' | 'recent'; page?: number; rating?: number }) {
-  await requestData();
+  'use cache';
+  cacheLife(CATALOG_LIFE);
+  cacheTag(CATALOG);
   const page = Math.max(1, opts.page ?? 1);
   return db.query.reviews.findMany({
     where: and(eq(reviews.productId, productId), eq(reviews.status, 'published'), opts.rating ? eq(reviews.rating, opts.rating) : undefined),
@@ -164,7 +182,9 @@ export async function listReviews(productId: string, opts: { sort?: 'helpful' | 
 }
 
 export async function getStorePage(slug: string) {
-  await requestData();
+  'use cache';
+  cacheLife(CATALOG_LIFE);
+  cacheTag(CATALOG);
   const [store] = await db.select().from(s).where(eq(s.slug, slug)).limit(1);
   if (!store || store.status !== 'active') return null;
   const [[{ products: productCount }], [{ followers }]] = await Promise.all([
@@ -178,7 +198,9 @@ export async function getStorePage(slug: string) {
 }
 
 export async function listStoreReviews(storeId: string) {
-  await requestData();
+  'use cache';
+  cacheLife(CATALOG_LIFE);
+  cacheTag(CATALOG);
   return db.query.reviews.findMany({
     where: and(eq(reviews.storeId, storeId), eq(reviews.status, 'published')),
     orderBy: [desc(reviews.createdAt)], limit: 6,
@@ -187,7 +209,9 @@ export async function listStoreReviews(storeId: string) {
 }
 
 export async function getProductsByIds(ids: string[]) {
-  await requestData();
+  'use cache';
+  cacheLife(CATALOG_LIFE);
+  cacheTag(CATALOG);
   if (!ids.length) return [];
   return cards(inArray(p.id, ids), [desc(p.publishedAt)], ids.length);
 }
