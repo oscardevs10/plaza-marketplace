@@ -1,5 +1,7 @@
 # Plaza — Marketplace multivendedor
 
+**Sitio publicado:** https://plaza-marketplace-beta.vercel.app
+
 Marketplace donde cualquier persona crea una cuenta, compra, y con la misma cuenta abre su tienda y vende. Incluye panel de vendedor, panel de administración, pagos (Stripe, Mercado Pago y un entorno Sandbox), reseñas verificadas, envíos con seguimiento y notificaciones.
 
 ## Arrancar en local
